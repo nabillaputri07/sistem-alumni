@@ -160,7 +160,7 @@ data_mahasiswa/
 
 - **Link Deployment:** `https://project-name.web.app`
 - **Link Repository:** `https://github.com/username/sistem-data-alumni`
-- **Link Demo Video:** `https://youtu.be/xxx`
+- **Link Demo Video:** https://drive.google.com/file/d/1jyrMIK1k1FXuajSpcVaMxnJXF49S3r93/view?usp=drive_link
 
 ---
 
@@ -233,3 +233,4 @@ Jika ada pertanyaan atau kendala, silakan hubungi:
 **Terima kasih telah menggunakan Sistem Data Alumni Fakultas Sains dan Teknologi!** 🎓
 
 ```
+
