@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Mahasiswa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50">
+
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-user-graduate text-3xl"></i>
+                <div>
+                    <h1 class="text-2xl font-bold">Dashboard Mahasiswa</h1>
+                    <p class="text-blue-100 text-sm">Portal Data Alumni</p>
+                </div>
+            </div>
+
+            <!-- User Info & Logout -->
+            <div class="flex items-center gap-4">
+                <div class="text-right">
+                    <p class="font-semibold" id="mahasiswaNama">Loading...</p>
+                    <p class="text-xs text-blue-100" id="mahasiswaNim">NIM: -</p>
+                </div>
+                <button 
+                    id="btnLogout"
+                    class="bg-white text-blue-600 px-4 py-2 rounded-lg font-semibold hover:bg-blue-50 transition flex items-center gap-2"
+                >
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+
+        <!-- Welcome Card -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">
+                <i class="fas fa-hand-wave text-yellow-500"></i>
+                Selamat Datang, <span id="welcomeName">Mahasiswa</span>!
+            </h2>
+            <p class="text-gray-600">Berikut adalah informasi profil Anda</p>
+        </div>
+
+        <!-- Profile Card -->
+        <div class="bg-white rounded-lg shadow-md overflow-hidden mb-6">
+            <div class="bg-gradient-to-r from-blue-500 to-cyan-500 p-6 flex items-center justify-between">
+                <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                    <i class="fas fa-id-card"></i>
+                    Profil Saya
+                </h3>
+                <button 
+                    id="btnRefresh"
+                    class="bg-white text-blue-600 px-3 py-1 rounded text-sm font-semibold hover:bg-blue-50 transition flex items-center gap-2"
+                >
+                    <i class="fas fa-sync-alt"></i>
+                    Refresh
+                </button>
+            </div>
+
+            <div id="profileContent" class="p-6 text-gray-800">
+                <div class="flex items-center justify-center py-8">
+                    <i class="fas fa-spinner fa-spin text-3xl text-blue-500"></i>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Script Firebase -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDvcW5e0tzQqLuzQ4i4vff2D0Jkc09CMd8",
+            authDomain: "data-alumni-b0381.firebaseapp.com",
+            projectId: "data-alumni-b0381",
+            storageBucket: "data-alumni-b0381.appspot.com",
+            messagingSenderId: "852905518914",
+            appId: "1:852905518914:web:71e503f91340991c3d4adb",
+            measurementId: "G-Z8ZLBZDZKY"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // === CEK LOGIN ===
+        const raw = sessionStorage.getItem("user");
+        if (!raw) {
+            window.location.href = "index.html";
+        }
+        const currentUser = JSON.parse(raw);
+        if (currentUser.role !== "mahasiswa") {
+            window.location.href = "index.html";
+        }
+
+        // Tampilkan header
+        document.getElementById("mahasiswaNama").textContent = currentUser.nama;
+        document.getElementById("mahasiswaNim").textContent = "NIM: " + currentUser.nim;
+        document.getElementById("welcomeName").textContent = currentUser.nama;
+
+        // === LOGOUT ===
+        document.getElementById("btnLogout").addEventListener("click", () => {
+            sessionStorage.removeItem("user");
+            window.location.href = "index.html";
+        });
+
+        // === LOAD PROFILE REALTIME ===
+        function loadProfile() {
+            const content = document.getElementById("profileContent");
+            content.innerHTML = `
+                <div class="flex items-center justify-center py-8">
+                    <i class="fas fa-spinner fa-spin text-3xl text-blue-500"></i>
+                    <span class="ml-3 text-gray-600">Memuat data...</span>
+                </div>
+            `;
+
+            // Query realtime berdasarkan field nim
+            const mahasiswaQuery = query(
+                collection(db, "mahasiswa"),
+                where("nim", "==", currentUser.nim)
+            );
+
+            onSnapshot(mahasiswaQuery, (snapshot) => {
+                if (!snapshot.empty) {
+                    const m = snapshot.docs[0].data();
+                    content.innerHTML = `
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-4">
+                                <div class="flex items-start">
+                                    <i class="fas fa-id-badge text-blue-500 mt-1 mr-3 w-5"></i>
+                                    <div><p class="text-sm text-gray-500">NIM</p><p class="font-semibold">${m.nim}</p></div>
+                                </div>
+                                <div class="flex items-start">
+                                    <i class="fas fa-user text-blue-500 mt-1 mr-3 w-5"></i>
+                                    <div><p class="text-sm text-gray-500">Nama Lengkap</p><p class="font-semibold">${m.nama}</p></div>
+                                </div>
+                                <div class="flex items-start">
+                                    <i class="fas fa-birthday-cake text-blue-500 mt-1 mr-3 w-5"></i>
+                                    <div><p class="text-sm text-gray-500">Tempat, Tanggal Lahir</p><p class="font-semibold">${m.tempatLahir}, ${m.tanggalLahir}</p></div>
+                                </div>
+                                <div class="flex items-start">
+                                    <i class="fas fa-venus-mars text-blue-500 mt-1 mr-3 w-5"></i>
+                                    <div><p class="text-sm text-gray-500">Jenis Kelamin</p><p class="font-semibold capitalize">${m.jenisKelamin}</p></div>
+                                </div>
+                                <div class="flex items-start">
+                                    <i class="fas fa-graduation-cap text-blue-500 mt-1 mr-3 w-5"></i>
+                                    <div><p class="text-sm text-gray-500">Jurusan</p><p class="font-semibold capitalize">${m.jurusan}</p></div>
+                                </div>
+                            </div>
+                            <div class="space-y-4">
+                                <div class="flex items-start">
+                                    <i class="fas fa-envelope text-blue-500 mt-1 mr-3 w-5"></i>
+                                    <div><p class="text-sm text-gray-500">Email</p><p class="font-semibold break-all">${m.email}</p></div>
+                                </div>
+                                <div class="flex items-start">
+                                    <i class="fas fa-phone text-blue-500 mt-1 mr-3 w-5"></i>
+                                    <div><p class="text-sm text-gray-500">No HP</p><p class="font-semibold">${m.noHp}</p></div>
+                                </div>
+                                <div class="flex items-start">
+                                    <i class="fas fa-map-marker-alt text-blue-500 mt-1 mr-3 w-5"></i>
+                                    <div><p class="text-sm text-gray-500">Alamat</p><p class="font-semibold">${m.alamat}</p></div>
+                                </div>
+                                <div class="flex items-start">
+                                    <i class="fas fa-calendar-alt text-blue-500 mt-1 mr-3 w-5"></i>
+                                    <div><p class="text-sm text-gray-500">Tahun Keluar</p><p class="font-semibold">${m.tahunKeluar}</p></div>
+                                </div>
+                                <div class="flex items-start">
+                                    <i class="fas fa-briefcase text-blue-500 mt-1 mr-3 w-5"></i>
+                                    <div><p class="text-sm text-gray-500">Pekerjaan</p><p class="font-semibold capitalize">${m.pekerjaan}</p></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6 pt-6 border-t border-gray-200">
+                            <div class="flex items-start mb-4">
+                                <i class="fas fa-book text-blue-500 mt-1 mr-3 w-5"></i>
+                                <div class="flex-1">
+                                    <p class="text-sm text-gray-500">Judul Skripsi</p>
+                                    <p class="font-semibold capitalize">${m.judulSkripsi}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-chalkboard-teacher text-blue-500 mt-1 mr-3 w-5"></i>
+                                <div class="flex-1">
+                                    <p class="text-sm text-gray-500">Penguji Skripsi</p>
+                                    <p class="font-semibold">${m.pengujiSkripsi}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    content.innerHTML = `<p class="text-center text-gray-500 py-8">Data mahasiswa tidak ditemukan</p>`;
+                }
+            });
+        }
+
+        document.getElementById("btnRefresh").addEventListener("click", () => {
+            loadProfile();
+        });
+
+        // Load profile saat halaman dibuka
+        loadProfile();
+    </script>
+
+</body>
+</html>
